@@ -6,6 +6,7 @@ import com.changgou.order.dao.OrderMapper;
 import com.changgou.order.pojo.Order;
 import com.changgou.order.pojo.OrderItem;
 import com.changgou.order.service.OrderService;
+import com.changgou.user.feign.UserFeign;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import entity.IdWorker;
@@ -24,6 +25,9 @@ import java.util.*;
  *****/
 @Service
 public class OrderServiceImpl implements OrderService {
+
+    @Autowired
+    private UserFeign userFeign;
 
     @Autowired
     private OrderMapper orderMapper;
@@ -103,6 +107,9 @@ public class OrderServiceImpl implements OrderService {
 
         //库存递减
         skuFeign.descCount(descMap);
+
+        //添加用户积分
+        userFeign.addPoints(1);
     }
 
     /**

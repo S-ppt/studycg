@@ -7,6 +7,7 @@ import entity.JwtUtil;
 import entity.Result;
 import entity.StatusCode;
 
+import entity.TokenDecode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -161,5 +162,14 @@ public class UserController {
         //调用UserService实现查询所有User
         List<User> list = userService.findAll();
         return new Result<List<User>>(true, StatusCode.OK,"查询成功",list) ;
+    }
+
+
+    @GetMapping("/points/add")
+    public Result addPoints(Integer points) {
+        //1.获取用户名
+        String username = TokenDecode.getUserInfo().get("username");
+        userService.addPoints(points, username);
+        return new Result(true, StatusCode.OK, "添加积分成功");
     }
 }

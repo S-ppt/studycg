@@ -204,4 +204,10 @@ public class UserServiceImpl implements UserService {
     public List<User> findAll() {
         return userMapper.selectAll();
     }
+
+    @Override
+    public void addPoints(Integer points, String username) {
+        //为了保证原子性使用sql语句
+        userMapper.addPoints(points, username);
+    }
 }

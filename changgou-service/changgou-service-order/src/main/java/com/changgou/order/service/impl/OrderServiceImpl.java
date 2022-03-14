@@ -10,12 +10,17 @@ import com.changgou.user.feign.UserFeign;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import entity.IdWorker;
+import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessagePostProcessor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import tk.mybatis.mapper.entity.Example;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /****
@@ -25,6 +30,9 @@ import java.util.*;
  *****/
 @Service
 public class OrderServiceImpl implements OrderService {
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
 
     @Autowired
     private UserFeign userFeign;
@@ -110,6 +118,45 @@ public class OrderServiceImpl implements OrderService {
 
         //添加用户积分
         userFeign.addPoints(1);
+
+        //添加订单
+        //发送时间
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        System.out.println("订单创建时间:" + simpleDateFormat.format(new Date()));
+        rabbitTemplate.convertAndSend("messageQueue", (Object) order.getId(), new MessagePostProcessor() {
+            @Override
+            public Message postProcessMessage(Message message) throws AmqpException {
+                message.getMessageProperties().setExpiration("10000");
+                return message;
+            }
+        });
+    }
+
+    @Override
+    public void deleteOrder(String outtradeno) {
+        Order order = orderMapper.selectByPrimaryKey(outtradeno);
+        order.setUpdateTime(new Date());
+        order.setOrderStatus("2");//支付失败
+
+        orderMapper.updateByPrimaryKeySelective(order);
+        //没有回滚库存
+    }
+
+    /**
+     * 修改订单状态
+     * @param outtradeno 订单号
+     * @param gmtpayment 支付时间
+     * @param trade_no 交易流水号
+     */
+    @Override
+    public void updateStatus(String outtradeno, Date gmtpayment, String trade_no) {
+        //1.查询订单
+        Order order = orderMapper.selectByPrimaryKey(outtradeno);
+        order.setPayType("1");
+        order.setPayTime(gmtpayment);
+        order.setTransactionId(trade_no);
+
+        orderMapper.updateByPrimaryKeySelective(order);
     }
 
     /**

@@ -3,6 +3,7 @@ package com.changgou.order.service;
 import com.changgou.order.pojo.Order;
 import com.github.pagehelper.PageInfo;
 
+import java.util.Date;
 import java.util.List;
 /****
  * @Author:shenkunlin
@@ -10,6 +11,16 @@ import java.util.List;
  * @Date 2019/6/14 0:16
  *****/
 public interface OrderService {
+
+    void deleteOrder(String outtradeno);
+
+    /**
+     *
+     * @param outtradeno 订单号
+     * @param gmtpayment 支付时间
+     * @param trade_no 交易流水号
+     */
+    void updateStatus(String outtradeno, Date gmtpayment, String trade_no);
 
     /***
      * Order多条件分页查询
